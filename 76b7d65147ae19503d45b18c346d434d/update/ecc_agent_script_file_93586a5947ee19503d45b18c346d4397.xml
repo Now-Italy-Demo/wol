@@ -12,9 +12,9 @@ LOGFILE=$PWD/logs/wol.log&#13;
 &#13;
 if [ ! -x $PWD/scripts/wol/wol_linux64 ]; then chmod 755 $PWD/scripts/wol/wol_linux64; fi&#13;
 &#13;
-echo "$(date +'%Y-%m-%d_%H%M%S') - Running $PWD/scripts/wol/wol_linux64 $1 $2" &gt;&gt; $LOGFILE&#13;
+echo "$(date +'%Y-%m-%d_%H%M%S') - Running $PWD/scripts/wol/wol_linux64 $AR1 $AR2" &gt;&gt; $LOGFILE&#13;
 &#13;
-$PWD/scripts/wol/wol_linux64 $1 $2 1&gt;&gt; $LOGFILE 2&gt;&gt; $LOGFILE&#13;
+$PWD/scripts/wol/wol_linux64 $AR1 $AR2 1&gt;&gt; $LOGFILE 2&gt;&gt; $LOGFILE&#13;
 &#13;
 &#13;
 </script>
@@ -26,7 +26,7 @@ $PWD/scripts/wol/wol_linux64 $1 $2 1&gt;&gt; $LOGFILE 2&gt;&gt; $LOGFILE&#13;
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>93586a5947ee19503d45b18c346d4397</sys_id>
-        <sys_mod_count>2</sys_mod_count>
+        <sys_mod_count>3</sys_mod_count>
         <sys_name>wol_wrap.sh</sys_name>
         <sys_overrides/>
         <sys_package display_value="Wake On Lan" source="76b7d65147ae19503d45b18c346d434d">76b7d65147ae19503d45b18c346d434d</sys_package>
@@ -34,7 +34,7 @@ $PWD/scripts/wol/wol_linux64 $1 $2 1&gt;&gt; $LOGFILE 2&gt;&gt; $LOGFILE&#13;
         <sys_scope display_value="Wake On Lan">76b7d65147ae19503d45b18c346d434d</sys_scope>
         <sys_update_name>ecc_agent_script_file_93586a5947ee19503d45b18c346d4397</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2022-10-15 10:21:47</sys_updated_on>
+        <sys_updated_on>2022-10-15 13:32:10</sys_updated_on>
         <use_attachment>false</use_attachment>
         <version/>
     </ecc_agent_script_file>
