@@ -28,7 +28,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>4c1022dd47ae19503d45b18c346d43f6</sys_id>
-        <sys_mod_count>3</sys_mod_count>
+        <sys_mod_count>9</sys_mod_count>
         <sys_name>Run WoL Command</sys_name>
         <sys_overrides/>
         <sys_package display_value="Wake On Lan" source="76b7d65147ae19503d45b18c346d434d">76b7d65147ae19503d45b18c346d434d</sys_package>
@@ -36,7 +36,7 @@
         <sys_scope display_value="Wake On Lan">76b7d65147ae19503d45b18c346d434d</sys_scope>
         <sys_update_name>sys_hub_action_type_definition_4c1022dd47ae19503d45b18c346d43f6</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2022-10-14 07:26:51</sys_updated_on>
+        <sys_updated_on>2022-10-15 10:35:52</sys_updated_on>
         <system_level>false</system_level>
         <type/>
     </sys_hub_action_type_definition>
@@ -161,10 +161,10 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2022-10-14 07:22:56</sys_created_on>
         <sys_id>c81062dd47ae19503d45b18c346d4324</sys_id>
-        <sys_mod_count>2</sys_mod_count>
+        <sys_mod_count>8</sys_mod_count>
         <sys_scope display_value="Wake On Lan">76b7d65147ae19503d45b18c346d434d</sys_scope>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2022-10-14 07:26:50</sys_updated_on>
+        <sys_updated_on>2022-10-15 10:35:51</sys_updated_on>
     </sys_hub_step_instance>
     <sys_variable_value action="delete_multiple" query="document_key=c81062dd47ae19503d45b18c346d4324"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
@@ -175,77 +175,64 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2022-10-14 07:22:57</sys_created_on>
         <sys_id>581062dd47ae19503d45b18c346d4350</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>6</sys_mod_count>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2022-10-14 07:22:57</sys_updated_on>
+        <sys_updated_on>2022-10-15 10:35:51</sys_updated_on>
         <value>(function execute(inputs, outputs) {
 
-// Send Command:
+  var ip_addr = '';
+  var mac_addr = inputs.mac.trim();
+  mac_addr = mac_addr.toUpperCase();
 
-  var cmd = inputs.command.trim();
-  var exec_timeout = inputs.exec_timeout;
+  if(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(inputs.ip.trim())) ip_addr = inputs.ip.trim();
   
-  if( isNaN(exec_timeout) || exec_timeout &lt;= 0 ) exec_timeout = 15; 
+  if( /^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/.test(mac_addr) ) {
+      // Valid mac 
+      var ecc_queue = new GlideRecord("ecc_queue");
+      ecc_queue.initialize();
+      ecc_queue.agent = "mid.server." + inputs.midserver;
+      ecc_queue.queue = "output";
+      ecc_queue.topic = "Command";
+      ecc_queue.name = '. $PWD/scripts/wol/wol_wrap.sh "' + mac_addr + '" "' + ip_addr + '"';
+      ecc_queue.payload = '&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;parameters&gt;&lt;parameter name="skip_sensor" value="true"/&gt;&lt;/parameters&gt;';
 
-  var ecc_queue = new GlideRecord("ecc_queue");
-  ecc_queue.initialize();
-  ecc_queue.agent = "mid.server." + inputs.midserver;
-  ecc_queue.queue = "output";
-  ecc_queue.topic = "Command";
-  if ( cmd.length &gt; 100 ) {
-  	ecc_queue.name = cmd.slice(0,10) + ' [.. long command ..]';
-    ecc_queue.payload = '&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;parameters&gt;&lt;parameter name="skip_sensor" value="true"/&gt;&lt;parameter name="name" value="' + cmd.replace( /\&amp;/g, '&amp;amp;').replace( /\"/g, '&amp;quot;').replace( /\'/g, '&amp;apos;').replace( /\&lt;/g, '&amp;lt;').replace( /\&gt;/g, '&amp;gt;') + '"/&gt;&lt;/parameters&gt;';
-  }
-  else { 
-  	ecc_queue.name = cmd;
-    ecc_queue.payload = '&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;parameters&gt;&lt;parameter name="skip_sensor" value="true"/&gt;&lt;/parameters&gt;';
-  }
-  
-  //Get SysID of new ECC Queue record
-  var ecc_sysid = ecc_queue.insert();
+      var ecc_sysid = ecc_queue.insert();
 
+      var exec_timeout = 15;
+      var response_sysid = '-';
+      var count = 0; 
+      var ecc_response = new GlideRecord("ecc_queue");
 
-  if( inputs.async_run == 'false' ) {
-       //Get Response from ECC Queue that was linked to the original Output command in the response_to reference 
-         var response_sysid = '-';
-         var count = 0; 
-         var ecc_response = new GlideRecord("ecc_queue");
+      //Get response that matches response to record set in output command sent earlier
 
-         //Get response that matches response to record set in output command sent earlier
-
-         while ( (response_sysid == '-') &amp;&amp; (count &lt; (exec_timeout * 1000) ) ) {
-           ecc_response.addQuery("response_to", ecc_sysid);
-           ecc_response.addQuery("queue", "input");
-           ecc_response.query();
-           if (ecc_response.next()) {
-                response_sysid = ecc_response.sys_id;
-           } 
-           else {
-                response_sysid = '-';
-                count+=500;
-                gs.sleep(500);
-           }
-         }
-
-         if (response_sysid != '-') {
-           	  outputs.result = 'Command terminated in ' + ((count-500)/1000) + ' seconds.';
-              var xmldoc = new XMLDocument(ecc_response.payload);
-			  outputs.stdout = xmldoc.getNodeText('//stdout');
-              outputs.stderr = xmldoc.getNodeText('//stderr');
-         } 
-         else {
+      while ( (response_sysid == '-') &amp;&amp; (count &lt; (exec_timeout * 1000) ) ) {
+        ecc_response.addQuery("response_to", ecc_sysid);
+        ecc_response.addQuery("queue", "input");
+        ecc_response.query();
+        if (ecc_response.next()) {
+          response_sysid = ecc_response.sys_id;
+        } 
+        else {
+          response_sysid = '-';
+          count+=500;
+          gs.sleep(500);
+        }
+      }
+    
+      if (response_sysid != '-') {
+           	  outputs.result = 'SUCCESS. Command terminated in ' + ((count-500)/1000) + ' seconds.';
+      } 
+      else {
               outputs.result = 'Timeout getting response in ' + ((count-500)/1000) + ' seconds.';
-              outputs.ecc_command_sysid = ecc_sysid;
-         }  
+      }
+    
   }
   else {
-    // Async run: return sys_id of Commnad and exit.
-    outputs.result = 'Async run.';
-    outputs.ecc_command_sysid = ecc_sysid;
+    outputs.result = 'Not a valid MAC Address';
   }
-  
-  
+    
 })(inputs, outputs);
+
 </value>
         <variable display_value="Script">71aa7f6647032200b4fad7527c9a719b</variable>
     </sys_variable_value>
